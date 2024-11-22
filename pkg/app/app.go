@@ -9,15 +9,15 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/dwarvesf/gerr"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/Essen-Labs/bloom-be/pkg/config"
 	"github.com/Essen-Labs/bloom-be/pkg/handler"
 	"github.com/Essen-Labs/bloom-be/pkg/middleware"
 	"github.com/Essen-Labs/bloom-be/pkg/validator"
 	"github.com/Essen-Labs/bloom-be/translation"
+	"github.com/dwarvesf/gerr"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 // App api app instance
@@ -105,7 +105,6 @@ func (a App) setupRouter() *gin.Engine {
 
 	// handlers
 	r.GET("/healthz", h.Healthz)
-	r.POST("/signup", h.Signup)
-	r.POST("/orders", h.CreateOrder)
+	r.POST("/completions", h.Completions)
 	return r
 }

@@ -21,6 +21,40 @@ type completionsRequest struct {
 	Content string `json:"content" binding:"required"`
 }
 
+// Define the structs to match the JSON structure
+type Message struct {
+	Content      string  `json:"content"`
+	Role         string  `json:"role"`
+	ToolCalls    *string `json:"tool_calls"` // Nullable fields use pointers
+	FunctionCall *string `json:"function_call"`
+}
+
+type Choice struct {
+	FinishReason string  `json:"finish_reason"`
+	Index        int     `json:"index"`
+	Message      Message `json:"message"`
+}
+
+type Usage struct {
+	CompletionTokens        int     `json:"completion_tokens"`
+	PromptTokens            int     `json:"prompt_tokens"`
+	TotalTokens             int     `json:"total_tokens"`
+	CompletionTokensDetails *string `json:"completion_tokens_details"`
+	PromptTokensDetails     *string `json:"prompt_tokens_details"`
+}
+
+type CompletionResponse struct {
+	ID                string   `json:"id"`
+	Created           int64    `json:"created"`
+	Model             string   `json:"model"`
+	Object            string   `json:"object"`
+	SystemFingerprint *string  `json:"system_fingerprint"`
+	Choices           []Choice `json:"choices"`
+	Usage             Usage    `json:"usage"`
+	ServiceTier       *string  `json:"service_tier"`
+	PromptLogprobs    *string  `json:"prompt_logprobs"`
+}
+
 // Signup create a user
 func (h *Handler) Completions(c *gin.Context) {
 	var req completionsRequest
@@ -41,7 +75,16 @@ func (h *Handler) Completions(c *gin.Context) {
 }
 
 func (h *Handler) doCompletions(cReq completionsRequest) ([]byte, error) {
-	jsonData, err := json.Marshal(cReq)
+	payload := map[string]interface{}{
+		"model": "Meta-Llama-3-1-8B-Instruct-FP8",
+		"messages": []map[string]string{
+			{
+				"role":    cReq.Role,
+				"content": cReq.Content,
+			},
+		},
+	}
+	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Println("Error marshalling JSON:", err)
 		return nil, err
@@ -74,6 +117,13 @@ func (h *Handler) doCompletions(cReq completionsRequest) ([]byte, error) {
 	err = json.Indent(&prettyJSON, body, "", "  ")
 	if err != nil {
 		fmt.Println("Error indenting JSON:", err)
+		return nil, err
+	}
+
+	var completionResponse CompletionResponse
+	err = json.Unmarshal(prettyJSON.Bytes(), &completionResponse)
+	if err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
 		return nil, err
 	}
 

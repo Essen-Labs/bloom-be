@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -26,7 +25,7 @@ func (h *Handler) GetUserFromCookie(c *gin.Context) (string, error) {
 	cookie, err := c.Request.Cookie("user_id")
 	if err != nil {
 		if err == http.ErrNoCookie {
-			return "", fmt.Errorf("cookie not found")
+			return "", err
 		}
 		return "", err
 	}

@@ -11,6 +11,8 @@ RUN go build -o /app/backend/main ./cmd/server
 
 FROM golang:1.17-alpine
 
+WORKDIR /app/backend
+
 RUN apk --no-cache add ca-certificates make
 
 COPY --from=backend-builder /app/backend .

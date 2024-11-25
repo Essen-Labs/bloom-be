@@ -65,7 +65,18 @@ func (h *Handler) Completions(c *gin.Context) {
 		return
 	}
 
-	res, err := h.doCompletions(req)
+	// Get the user ID from the cookie
+	userID, err := h.GetUserFromCookie(c)
+	if err != nil {
+		if err == http.ErrNoCookie {
+			h.SetUserCookie(c)
+		} else {
+			h.handleError(c, err)
+			return
+		}
+	}
+
+	res, err := h.doCompletions(req, userID)
 	if err != nil {
 		h.handleError(c, gerr.E(500, gerr.Trace(err)))
 		return
@@ -74,7 +85,7 @@ func (h *Handler) Completions(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) doCompletions(cReq completionsRequest) ([]byte, error) {
+func (h *Handler) doCompletions(cReq completionsRequest, userID string) ([]byte, error) {
 	payload := map[string]interface{}{
 		"model": "Meta-Llama-3-1-8B-Instruct-FP8",
 		"messages": []map[string]string{

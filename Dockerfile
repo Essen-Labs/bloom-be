@@ -1,21 +1,20 @@
-FROM golang:1.13
-RUN mkdir /build
-WORKDIR /build
+FROM golang:1.17 AS backend-builder
+
+# Set the working directory
+WORKDIR /app/backend
+
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
 
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o server cmd/server/main.go
+RUN go build -o /app/backend/main ./cmd/server
 
-FROM alpine:3.10
-ARG DEFAULT_PORT
-RUN apk --no-cache add ca-certificates
-WORKDIR /
+FROM golang:1.17-alpine
 
-COPY --from=0 /build/server server
+RUN apk --no-cache add ca-certificates make
 
-## config for timezone
-COPY --from=0 /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=0 /build/docker-entrypoint.sh /
-COPY --from=0 /build/templates /templates
-EXPOSE ${DEFAULT_PORT}
+COPY --from=backend-builder /app/backend .
 
-ENTRYPOINT [ "/server" ]
+EXPOSE 8100
+
+CMD ["make", "dev"]

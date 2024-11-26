@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"net/http"
 	"regexp"
 	"strings"
@@ -19,14 +20,16 @@ type Handler struct {
 	log        gerr.Log
 	cfg        config.Config
 	translator translation.Helper
+	db         *sql.DB
 }
 
 // NewHandler make handler
-func NewHandler(cfg config.Config, l gerr.Log, th translation.Helper) *Handler {
+func NewHandler(cfg config.Config, l gerr.Log, th translation.Helper, db *sql.DB) *Handler {
 	return &Handler{
 		log:        l,
 		cfg:        cfg,
 		translator: th,
+		db:         db,
 	}
 }
 

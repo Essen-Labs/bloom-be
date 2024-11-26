@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,10 +26,11 @@ type App struct {
 	cfg config.Config
 	l   gerr.Log
 	th  translation.Helper
+	db  *sql.DB
 }
 
 // LoadApp load config and init app
-func LoadApp() *App {
+func LoadApp(db *sql.DB) *App {
 	cls := config.DefaultConfigLoaders()
 	cfg := config.LoadConfig(cls)
 	l := gerr.NewSimpleLog()
@@ -38,6 +40,7 @@ func LoadApp() *App {
 		cfg: cfg,
 		l:   l,
 		th:  th,
+		db:  db,
 	}
 }
 
@@ -101,7 +104,7 @@ func (a App) setupRouter() *gin.Engine {
 		},
 	))
 
-	h := handler.NewHandler(a.cfg, a.l, a.th)
+	h := handler.NewHandler(a.cfg, a.l, a.th, a.db)
 
 	// handlers
 	r.GET("/healthz", h.Healthz)

@@ -49,7 +49,11 @@ func (a App) Run() {
 	router := a.setupRouter()
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
-
+	err := a.createTables()
+	if err != nil {
+		log.Fatal("Error creating tables: ", err)
+		return
+	}
 	gerr.SetCleanPathFunc(func(path string) string {
 		projName := "bloom-be/"
 		startIdx := strings.Index(path, projName)
@@ -65,6 +69,7 @@ func (a App) Run() {
 	}
 
 	go func() {
+
 		// service connections
 		a.l.Info("listening on ", a.cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -108,6 +113,13 @@ func (a App) setupRouter() *gin.Engine {
 
 	// handlers
 	r.GET("/healthz", h.Healthz)
-	r.POST("/completions", h.Completions)
+	r.POST("/send-chat", h.Completions)
+	r.GET("/get-chat-by-id", h.Completions)     // TODO
+	r.GET("/get-chat-list", h.Completions)      // TODO
+	r.POST("/delete-chat", h.Completions)       // TODO
+	r.POST("/delete-all-chat", h.Completions)   // TODO
+	r.POST("/edit-chat", h.Completions)         // TODO
+	r.GET("/get-all-msgs-by-id", h.Completions) // TODO
+	r.GET("/get-model-list", h.Completions)     // TODO
 	return r
 }

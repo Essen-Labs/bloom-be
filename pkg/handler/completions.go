@@ -30,9 +30,12 @@ type completionsRequest struct {
 
 // Response structure for the completion request
 type CompletionResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    []byte `json:"data"`
+	Success        bool   `json:"success"`
+	Message        string `json:"message"`
+	Content        string `json:"content"`
+	Role           string `json:"role"`
+	ConversationID string `json:"conversation_id"`
+	CreatedAt      int64  `json:"created_at"`
 }
 
 // Define the structs to match the JSON structure
@@ -69,9 +72,11 @@ type AkashCompletionResponse struct {
 	PromptLogprobs    *string  `json:"prompt_logprobs"`
 }
 
-func handleError(msg string, err error) ([]byte, error) {
+// handleError is a generic function that returns a value of type T and an error
+func handleError[T any](msg string, err error) (T, error) {
+	var zeroValue T
 	fmt.Println(msg, err)
-	return nil, fmt.Errorf("%s: %w", msg, err)
+	return zeroValue, fmt.Errorf("%s: %w", msg, err)
 }
 
 // Completions godoc
@@ -130,15 +135,15 @@ func (h *Handler) Completions(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID, model string) ([]byte, error) {
+func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID, model string) (CompletionResponse, error) {
 	_, err := ensureConversation(h.db, conversationID, model, userID)
 	if err != nil {
-		return handleError("Error ensuring conversation:", err)
+		return handleError[CompletionResponse]("Error ensuring conversation:", err)
 	}
 
 	oldMsgs, err := getOldMessages(h.db, conversationID)
 	if err != nil {
-		return handleError("Error getting old messages:", err)
+		return handleError[CompletionResponse]("Error getting old messages:", err)
 	}
 
 	oldMsgs = append(oldMsgs, map[string]string{
@@ -150,7 +155,7 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 		Content: cReq.Content,
 	}, time.Now().Unix())
 	if err != nil {
-		return handleError("Error inserting message into DB:", err)
+		return handleError[CompletionResponse]("Error inserting message into DB:", err)
 	}
 
 	payload := map[string]interface{}{
@@ -159,13 +164,13 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 	}
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		return handleError("Error marshalling JSON:", err)
+		return handleError[CompletionResponse]("Error marshalling JSON:", err)
 	}
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
 	if err != nil {
-		return handleError("Error creating request:", err)
+		return handleError[CompletionResponse]("Error creating request:", err)
 	}
 
 	req.Header.Add("Content-Type", "application/json")
@@ -173,40 +178,43 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 
 	res, err := client.Do(req)
 	if err != nil {
-		return handleError("Error making API request:", err)
+		return handleError[CompletionResponse]("Error making API request:", err)
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return handleError("Error reading response body:", err)
+		return handleError[CompletionResponse]("Error reading response body:", err)
 	}
 
 	var prettyJSON bytes.Buffer
 	err = json.Indent(&prettyJSON, body, "", "  ")
 	if err != nil {
-		return handleError("Error indenting JSON:", err)
+		return handleError[CompletionResponse]("Error indenting JSON:", err)
 	}
 
 	var completionResponse AkashCompletionResponse
 	err = json.Unmarshal(prettyJSON.Bytes(), &completionResponse)
 	if err != nil {
-		return handleError("Error unmarshaling JSON:", err)
+		return handleError[CompletionResponse]("Error unmarshaling JSON:", err)
 	}
 
 	err = h.setMessages(conversationID, completionResponse.Choices[0].Message, completionResponse.Created)
 	if err != nil {
-		return handleError("Error inserting completion message into DB:", err)
+		return handleError[CompletionResponse]("Error inserting completion message into DB:", err)
 	}
 
 	// Prepare the final response structure
 	response := CompletionResponse{
-		Success: true,
-		Message: "Successfully completed the request.",
-		Data:    prettyJSON.Bytes(),
+		Success:        true,
+		Message:        "Successfully completed the request.",
+		Content:        completionResponse.Choices[0].Message.Content,
+		Role:           completionResponse.Choices[0].Message.Role,
+		ConversationID: conversationID,
+		CreatedAt:      completionResponse.Created,
 	}
 
-	return json.Marshal(response)
+	return response, nil
 }
 
 func getOldMessages(db *sql.DB, conversationID string) ([]map[string]string, error) {

@@ -68,12 +68,11 @@ func (a App) Run() {
 	})
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", a.cfg.Port),
+		Addr:    fmt.Sprintf("0.0.0.0:%s", a.cfg.Port),
 		Handler: router,
 	}
 
 	go func() {
-
 		// service connections
 		a.l.Info("listening on ", a.cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

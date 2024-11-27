@@ -19,6 +19,10 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+
+	_ "github.com/Essen-Labs/bloom-be/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // App api app instance
@@ -94,7 +98,7 @@ func (a App) Run() {
 func (a App) setupRouter() *gin.Engine {
 	r := gin.New()
 	binding.Validator = validator.NewStructValidator(a.th)
-
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Use(middleware.NewLogDataMiddleware(a.cfg.ServiceName, a.cfg.Env))
 	r.Use(cors.New(
 		cors.Config{

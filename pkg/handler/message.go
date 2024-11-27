@@ -13,6 +13,17 @@ type getAllMsgsByIDRequest struct {
 	ConversationID string `json:"conversation_id"`
 }
 
+// GetAllMsgsByID fetches all messages by conversation ID
+// @Summary Get all messages for a specific conversation
+// @Description Fetches all messages associated with a given conversation ID, ordered by timestamp.
+// @Accept json
+// @Produce json
+// @Param conversation_id body string true "Conversation ID"
+// @Success 200 {array} Message "List of messages in the conversation"
+// @Failure 400 {object} ErrorResponse "Invalid conversation ID"
+// @Failure 404 {object} ErrorResponse "Conversation not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /messages [get]
 func (h *Handler) GetAllMsgsByID(c *gin.Context) {
 	var req getAllMsgsByIDRequest
 

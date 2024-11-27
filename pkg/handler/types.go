@@ -14,3 +14,11 @@ type Message struct {
 	Content        string `json:"content"`
 	Timestamp      string `json:"timestamp"`
 }
+
+// ErrorResponse represents the structure for error messages
+// @Description Common error response format
+// @Success 500 {object} ErrorResponse "Internal Server Error"
+// @Failure 400 {object} ErrorResponse "Bad Request"
+type ErrorResponse struct {
+    Error string `json:"error" example:"Invalid input"`
+}

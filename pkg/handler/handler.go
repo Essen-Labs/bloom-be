@@ -115,8 +115,14 @@ func makeKeysFromTarget(target string) []string {
 	return rs
 }
 
-// Healthz handler
-// Return "OK"
+// Healthz godoc
+// @Summary Health check
+// @Description Check if the service is running
+// @Tags health
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string "OK"
+// @Router /healthz [get]
 func (h *Handler) Healthz(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	c.Writer.WriteHeader(http.StatusOK)

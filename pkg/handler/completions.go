@@ -29,7 +29,7 @@ type completionsRequest struct {
 }
 
 // Define the structs to match the JSON structure
-type Message struct {
+type ChoiceMessage struct {
 	Content      string  `json:"content"`
 	Role         string  `json:"role"`
 	ToolCalls    *string `json:"tool_calls"` // Nullable fields use pointers
@@ -37,9 +37,9 @@ type Message struct {
 }
 
 type Choice struct {
-	FinishReason string  `json:"finish_reason"`
-	Index        int     `json:"index"`
-	Message      Message `json:"message"`
+	FinishReason string        `json:"finish_reason"`
+	Index        int           `json:"index"`
+	Message      ChoiceMessage `json:"message"`
 }
 
 type Usage struct {
@@ -119,7 +119,7 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 		"role":    cReq.Role,
 		"content": cReq.Content,
 	})
-	err = h.setMessages(conversationID, Message{
+	err = h.setMessages(conversationID, ChoiceMessage{
 		Role:    cReq.Role,
 		Content: cReq.Content,
 	}, time.Now().Unix())
@@ -212,7 +212,7 @@ func getOldMessages(db *sql.DB, conversationID string) ([]map[string]string, err
 	return messages, nil
 }
 
-func (h *Handler) setMessages(conversationID string, message Message, created int64) error {
+func (h *Handler) setMessages(conversationID string, message ChoiceMessage, created int64) error {
 	// Insert the new message into the messages table
 	_, err := h.db.Exec(`
 		INSERT INTO messages (conversation_id, role, content, timestamp)

@@ -4,21 +4,6 @@ import (
 	"log"
 )
 
-// Message struct represents a message
-type Message struct {
-	Role      string `json:"role"`      // Role of the sender (e.g., 'user' or 'assistant')
-	Content   string `json:"content"`   // Message content
-	Timestamp string `json:"timestamp"` // Timestamp of when the message was sent
-}
-
-// Conversation struct represents a conversation with an array of messages
-type Conversation struct {
-	ID       int       `gorm:"primaryKey;autoIncrement"`                  // Unique ID for the conversation
-	Model    string    `json:"model"`                                     // Model used for the conversation
-	UserID   string    `json:"userID"`                                    // User ID associated with the conversation
-	Messages []Message `json:"messages" gorm:"foreignKey:ConversationID"` // Messages in the conversation
-}
-
 func (a App) createTables() error {
 	// Create Conversations table
 	_, err := a.db.Exec(`

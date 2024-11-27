@@ -23,7 +23,7 @@ type getAllMsgsByIDRequest struct {
 // @Failure 400 {object} ErrorResponse "Invalid conversation ID"
 // @Failure 404 {object} ErrorResponse "Conversation not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /messages [get]
+// @Router /get-all-msgs-by-id [get]
 func (h *Handler) GetAllMsgsByID(c *gin.Context) {
 	var req getAllMsgsByIDRequest
 

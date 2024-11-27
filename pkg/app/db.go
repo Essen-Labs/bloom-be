@@ -10,7 +10,7 @@ func (a App) createTables() error {
 		CREATE TABLE IF NOT EXISTS conversations (
 			id SERIAL PRIMARY KEY,
 			model VARCHAR(255),
-			conversation_nam VARCHAR(255),
+			conversation_name VARCHAR(255),
 			user_id VARCHAR(255)
 		)
 	`)

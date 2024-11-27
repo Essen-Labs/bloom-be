@@ -4,25 +4,7 @@
         "contact": {}
     },
     "paths": {
-        "/chat/all": {
-            "get": {
-                "description": "Retrieves all conversations stored in the database",
-                "summary": "Get all conversations",
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved all conversations",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetAllChatResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    }
-                }
-            },
+        "/delete-all-chat": {
             "delete": {
                 "security": [
                     {
@@ -59,46 +41,7 @@
                 }
             }
         },
-        "/chat/{conversation_id}": {
-            "get": {
-                "description": "Retrieves a conversation from the database using its ID",
-                "summary": "Get a conversation by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Conversation ID",
-                        "name": "conversation_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully retrieved the conversation",
-                        "schema": {
-                            "$ref": "#/definitions/handler.GetChatByIDResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Conversation not found",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/handler.ErrorResponse"
-                        }
-                    }
-                }
-            },
+        "/delete-chat": {
             "delete": {
                 "description": "Deletes the specified conversation and its associated messages from the database",
                 "summary": "Delete a conversation by ID",
@@ -139,30 +82,7 @@
                 }
             }
         },
-        "/healthz": {
-            "get": {
-                "description": "Check if the service is running",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Health check",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/messages": {
+        "/get-all-msgs-by-id": {
             "get": {
                 "description": "Fetches all messages associated with a given conversation ID, ordered by timestamp.",
                 "consumes": [
@@ -209,6 +129,90 @@
                         "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get-chat-by-id": {
+            "get": {
+                "description": "Retrieves a conversation from the database using its ID",
+                "summary": "Get a conversation by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Conversation ID",
+                        "name": "conversation_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved the conversation",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetChatByIDResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Conversation not found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/get-chat-list": {
+            "get": {
+                "description": "Retrieves all conversations stored in the database",
+                "summary": "Get all conversations",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved all conversations",
+                        "schema": {
+                            "$ref": "#/definitions/handler.GetAllChatResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz": {
+            "get": {
+                "description": "Check if the service is running",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -265,13 +269,19 @@
         "handler.CompletionResponse": {
             "type": "object",
             "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "content": {
+                    "type": "string"
+                },
+                "conversation_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "integer"
                 },
                 "message": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 },
                 "success": {
@@ -282,6 +292,10 @@
         "handler.Conversation": {
             "type": "object",
             "properties": {
+                "conversationName": {
+                    "description": "Name of the conversation",
+                    "type": "string"
+                },
                 "id": {
                     "description": "Unique ID for the conversation",
                     "type": "string"

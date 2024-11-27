@@ -1,17 +1,24 @@
 definitions:
   handler.CompletionResponse:
     properties:
-      data:
-        items:
-          type: integer
-        type: array
+      content:
+        type: string
+      conversation_id:
+        type: string
+      created_at:
+        type: integer
       message:
+        type: string
+      role:
         type: string
       success:
         type: boolean
     type: object
   handler.Conversation:
     properties:
+      conversationName:
+        description: Name of the conversation
+        type: string
       id:
         description: Unique ID for the conversation
         type: string
@@ -95,7 +102,31 @@ definitions:
 info:
   contact: {}
 paths:
-  /chat/{conversation_id}:
+  /delete-all-chat:
+    delete:
+      description: Deletes all conversations and their associated messages for a given
+        user
+      responses:
+        "200":
+          description: Successfully deleted all conversations for the user
+          schema:
+            $ref: '#/definitions/handler.deleteAllChatByUserIDResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: No conversations found for the user
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete all conversations for a user
+  /delete-chat:
     delete:
       description: Deletes the specified conversation and its associated messages
         from the database
@@ -123,84 +154,7 @@ paths:
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
       summary: Delete a conversation by ID
-    get:
-      description: Retrieves a conversation from the database using its ID
-      parameters:
-      - description: Conversation ID
-        in: path
-        name: conversation_id
-        required: true
-        type: string
-      responses:
-        "200":
-          description: Successfully retrieved the conversation
-          schema:
-            $ref: '#/definitions/handler.GetChatByIDResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "404":
-          description: Conversation not found
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      summary: Get a conversation by ID
-  /chat/all:
-    delete:
-      description: Deletes all conversations and their associated messages for a given
-        user
-      responses:
-        "200":
-          description: Successfully deleted all conversations for the user
-          schema:
-            $ref: '#/definitions/handler.deleteAllChatByUserIDResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "404":
-          description: No conversations found for the user
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Delete all conversations for a user
-    get:
-      description: Retrieves all conversations stored in the database
-      responses:
-        "200":
-          description: Successfully retrieved all conversations
-          schema:
-            $ref: '#/definitions/handler.GetAllChatResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.ErrorResponse'
-      summary: Get all conversations
-  /healthz:
-    get:
-      consumes:
-      - application/json
-      description: Check if the service is running
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-      summary: Health check
-      tags:
-      - health
-  /messages:
+  /get-all-msgs-by-id:
     get:
       consumes:
       - application/json
@@ -235,6 +189,61 @@ paths:
           schema:
             $ref: '#/definitions/handler.ErrorResponse'
       summary: Get all messages for a specific conversation
+  /get-chat-by-id:
+    get:
+      description: Retrieves a conversation from the database using its ID
+      parameters:
+      - description: Conversation ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Successfully retrieved the conversation
+          schema:
+            $ref: '#/definitions/handler.GetChatByIDResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Conversation not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get a conversation by ID
+  /get-chat-list:
+    get:
+      description: Retrieves all conversations stored in the database
+      responses:
+        "200":
+          description: Successfully retrieved all conversations
+          schema:
+            $ref: '#/definitions/handler.GetAllChatResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get all conversations
+  /healthz:
+    get:
+      consumes:
+      - application/json
+      description: Check if the service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Health check
+      tags:
+      - health
   /send-chat:
     post:
       consumes:

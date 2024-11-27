@@ -2,9 +2,10 @@ package handler
 
 // Conversation struct represents a conversation with an array of messages
 type Conversation struct {
-	ID     string `gorm:"primaryKey;autoIncrement"` // Unique ID for the conversation
-	Model  string `json:"model"`                    // Model used for the conversation
-	UserID string `json:"userID"`                   // User ID associated with the conversation
+	ID               string `gorm:"primaryKey;autoIncrement"` // Unique ID for the conversation
+	Model            string `json:"model"`                    // Model used for the conversation
+	ConversationName string `json:"conversationName"`         // Name of the conversation
+	UserID           string `json:"userID"`                   // User ID associated with the conversation
 }
 
 type Message struct {
@@ -20,5 +21,5 @@ type Message struct {
 // @Success 500 {object} ErrorResponse "Internal Server Error"
 // @Failure 400 {object} ErrorResponse "Bad Request"
 type ErrorResponse struct {
-    Error string `json:"error" example:"Invalid input"`
+	Error string `json:"error" example:"Invalid input"`
 }

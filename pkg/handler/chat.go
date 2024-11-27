@@ -52,7 +52,7 @@ type GetAllChatResponse struct {
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 404 {object} ErrorResponse "Conversation not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /chat/{conversation_id} [get]
+// @Router /get-chat-by-id [get]
 func (h *Handler) GetChatById(c *gin.Context) {
 	var req GetChatByIDRequest
 
@@ -75,8 +75,8 @@ func (h *Handler) doGetChatByID(cReq GetChatByIDRequest) ([]byte, error) {
 	var conversation Conversation
 
 	err := h.db.QueryRow(`
-        SELECT id, model, user_id FROM conversations WHERE id = $1`, cReq.ConversationID).Scan(
-		&conversation.ID, &conversation.Model, &conversation.UserID)
+        SELECT id, model, conversation_name, user_id FROM conversations WHERE id = $1`, cReq.ConversationID).Scan(
+		&conversation.ID, &conversation.Model, &conversation.ConversationName, &conversation.UserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("conversation not found")
@@ -97,7 +97,7 @@ func (h *Handler) doGetChatByID(cReq GetChatByIDRequest) ([]byte, error) {
 // @Description Retrieves all conversations stored in the database
 // @Success 200 {object} GetAllChatResponse "Successfully retrieved all conversations"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /chat/all [get]
+// @Router /get-chat-list [get]
 func (h *Handler) GetAllChat(c *gin.Context) {
 	res, err := h.doGetAllChat()
 	if err != nil {
@@ -110,7 +110,7 @@ func (h *Handler) GetAllChat(c *gin.Context) {
 
 func (h *Handler) doGetAllChat() ([]byte, error) {
 	// Query to get all conversations
-	rows, err := h.db.Query("SELECT id, model, user_id FROM conversations")
+	rows, err := h.db.Query("SELECT id, model, conversation_name, user_id FROM conversations")
 	if err != nil {
 		return nil, fmt.Errorf("error querying conversations: %v", err)
 	}
@@ -122,7 +122,7 @@ func (h *Handler) doGetAllChat() ([]byte, error) {
 	// Iterate over the rows
 	for rows.Next() {
 		var conversation Conversation
-		if err := rows.Scan(&conversation.ID, &conversation.Model, &conversation.UserID); err != nil {
+		if err := rows.Scan(&conversation.ID, &conversation.Model, &conversation.ConversationName, &conversation.UserID); err != nil {
 			return nil, fmt.Errorf("error scanning conversation: %v", err)
 		}
 		conversations = append(conversations, conversation)
@@ -142,7 +142,6 @@ func (h *Handler) doGetAllChat() ([]byte, error) {
 	return json.Marshal(response)
 }
 
-
 type deleteChatByIDRequest struct {
 	ConversationID string `json:"conversation_id"`
 }
@@ -160,7 +159,7 @@ type deleteChatByIDResponse struct {
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 404 {object} ErrorResponse "Conversation not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /chat/{conversation_id} [delete]
+// @Router /delete-chat [delete]
 func (h *Handler) DeleteChatById(c *gin.Context) {
 	var req deleteChatByIDRequest
 
@@ -239,7 +238,7 @@ func (h *Handler) doDeleteChatByID(cReq deleteChatByIDRequest) ([]byte, error) {
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 404 {object} ErrorResponse "No conversations found for the user"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /chat/all [delete]
+// @Router /delete-all-chat [delete]
 func (h *Handler) DeleteAllChat(c *gin.Context) {
 	// Get the user ID from the cookie
 	userID, err := h.GetUserFromCookie(c)

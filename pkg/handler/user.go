@@ -43,5 +43,4 @@ func (h *Handler) SetUserCookie(c *gin.Context) {
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(c.Writer, cookie)
-	c.JSON(http.StatusOK, gin.H{"message": "cookie set"})
 }

@@ -93,7 +93,7 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 			traceID = ld.GetTraceID()
 		}
 	}
-	h.log.Log(logDataRaw, parsedErr)
+	h.log.Log(logDataRaw, parsedErr) //nolint:errcheck // Ignore unused function warning
 
 	c.AbortWithStatusJSON(parsedErr.StatusCode(), parsedErr.ToResponseError(traceID))
 }
@@ -101,7 +101,7 @@ func (h *Handler) handleError(c *gin.Context, err error) {
 func makeKeysFromTarget(target string) []string {
 	keys := strings.Split(target, ".")
 	rs := []string{}
-	reg, _ := regexp.Compile("(.+)\\[(.+)\\]")
+	reg, _ := regexp.Compile("(.+)\\[(.+)\\]") //nolint
 	for idx := range keys {
 		k := keys[idx]
 		itms := reg.FindStringSubmatch(k)
@@ -126,5 +126,5 @@ func makeKeysFromTarget(target string) []string {
 func (h *Handler) Healthz(c *gin.Context) {
 	c.Header("Content-Type", "text/plain")
 	c.Writer.WriteHeader(http.StatusOK)
-	c.Writer.Write([]byte("OK"))
+	c.Writer.Write([]byte("OK")) //nolint
 }

@@ -192,10 +192,10 @@ func (h *Handler) doDeleteChatByID(cReq deleteChatByIDRequest) ([]byte, error) {
 	// Rollback the transaction if there's an error
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Re-raise the panic
+			err = tx.Rollback()
+			panic(err) // Re-raise the panic
 		} else if err != nil {
-			tx.Rollback()
+			err = tx.Rollback()
 		} else {
 			err = tx.Commit()
 		}
@@ -270,10 +270,10 @@ func (h *Handler) doDeleteAllChatByUserID(userID string) ([]byte, error) {
 	// Rollback the transaction if there's an error
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // Re-raise the panic
+			err = tx.Rollback()
+			panic(err) // Re-raise the panic
 		} else if err != nil {
-			tx.Rollback()
+			err = tx.Rollback()
 		} else {
 			err = tx.Commit()
 		}

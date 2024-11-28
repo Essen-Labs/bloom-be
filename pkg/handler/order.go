@@ -16,10 +16,6 @@ type orderReq struct {
 	Items []orderItem `json:"items" binding:"gt=0,dive"`
 }
 
-type orderRes struct {
-	Items []orderItem `json:"items" binding:"gt=0,dive"`
-}
-
 func (h *Handler) CreateOrder(c *gin.Context) {
 	var req orderReq
 

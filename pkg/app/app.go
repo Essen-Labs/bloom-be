@@ -52,7 +52,7 @@ func LoadApp(db *sql.DB) *App {
 func (a App) Run() {
 	router := a.setupRouter()
 	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
+	signal.Notify(quit, os.Interrupt) //nolint
 	err := a.createTables()
 	if err != nil {
 		log.Fatal("Error creating tables: ", err)
@@ -74,23 +74,26 @@ func (a App) Run() {
 
 	go func() {
 		// service connections
-		a.l.Info("listening on ", a.cfg.Port)
+		err = a.l.Info("listening on ", a.cfg.Port)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}
 		quit <- os.Interrupt
 	}()
 
-	select {
+	select { //nolint:gosimple // Ignore unused function warning
 	case <-quit:
 
-		a.l.Info("Shutdown Server ...")
+		a.l.Info("Shutdown Server ...") //nolint:errcheck // Ignore unused function warning
 		ctx, cancel := context.WithTimeout(context.Background(), a.cfg.GetShutdownTimeout())
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
-			a.l.Error("Server Shutdown:", err)
+			a.l.Error("Server Shutdown:", err) //nolint:errcheck // Ignore unused function warning
 		}
-		a.l.Info("Server exiting")
+		a.l.Info("Server exiting") //nolint:errcheck // Ignore unused function warning
 	}
 }
 

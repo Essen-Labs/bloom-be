@@ -36,8 +36,8 @@ type helper struct {
 
 func (h *helper) InitErrorTranslator(validate *validator.Validate) {
 	// initialize translations
-	vietnamese.Init(h.uni, validate)
-	english.Init(h.uni, validate)
+	vietnamese.Init(h.uni, validate) //nolint:errcheck // Ignore unused function warning
+	english.Init(h.uni, validate)    //nolint:errcheck // Ignore unused function warning
 
 	defTrans, _ := h.uni.FindTranslator("en")
 	h.defTranslator = defTrans

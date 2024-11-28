@@ -17,8 +17,8 @@ func main() {
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := "bloom"
 
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword)
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		dbHost, dbPort, dbUser, dbPassword, dbName)
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {

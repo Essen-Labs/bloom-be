@@ -17,7 +17,7 @@ func main() {
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := "bloom"
 
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=disable",
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable",
 		dbHost, dbPort, dbUser, dbPassword)
 
 	db, err := sql.Open("postgres", connStr)
@@ -48,9 +48,10 @@ func main() {
 		dbHost, dbPort, dbUser, dbPassword, dbName)
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to the new database: %v", err)
 	}
 	defer db.Close()
 
+	fmt.Println("Successfully connected to the database and running app!")
 	app.LoadApp(db).Run()
 }

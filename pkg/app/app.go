@@ -114,12 +114,12 @@ func (a App) setupRouter() *gin.Engine {
 
 	// handlers
 	r.GET("/healthz", h.Healthz)
-	r.GET("/get-chat-by-id", h.GetChatById)
+	r.GET("/get-chat-by-id/:conversation_id", h.GetChatById)
 	r.GET("/get-chat-list", h.GetAllChat)
 	r.POST("/send-chat", h.Completions)
-	r.GET("/get-all-msgs-by-id", h.GetAllMsgsByID)
-	r.POST("/delete-chat", h.DeleteChatById)
-	r.POST("/delete-all-chat", h.DeleteAllChat)
+	r.GET("/get-all-msgs-by-id/:conversation_id", h.GetAllMsgsByID)
+	r.DELETE("/delete-chat/:conversation_id", h.DeleteChatById)
+	r.DELETE("/delete-all-chat", h.DeleteAllChat)
 	// r.POST("/edit-chat", h.Completions)         // TODO
 	// r.GET("/get-model-list", h.Completions)     // TODO
 	return r

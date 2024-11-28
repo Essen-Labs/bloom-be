@@ -9,31 +9,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type getAllMsgsByIDRequest struct {
-	ConversationID string `json:"conversation_id"`
-}
-
 // GetAllMsgsByID fetches all messages by conversation ID
 // @Summary Get all messages for a specific conversation
 // @Description Fetches all messages associated with a given conversation ID, ordered by timestamp.
 // @Accept json
 // @Produce json
-// @Param conversation_id body string true "Conversation ID"
+// @Param conversation_id path string true "Conversation ID"
 // @Success 200 {array} Message "List of messages in the conversation"
 // @Failure 400 {object} ErrorResponse "Invalid conversation ID"
 // @Failure 404 {object} ErrorResponse "Conversation not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /get-all-msgs-by-id [get]
+// @Router /get-all-msgs-by-id/{conversation_id} [get]
 func (h *Handler) GetAllMsgsByID(c *gin.Context) {
-	var req getAllMsgsByIDRequest
+	conversationID := c.Param("conversation_id")
 
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	res, err := h.doGetAllMsgsByID(req)
+	res, err := h.doGetAllMsgsByID(conversationID)
 	if err != nil {
 		h.handleError(c, gerr.E(500, gerr.Trace(err)))
 		return
@@ -42,13 +32,13 @@ func (h *Handler) GetAllMsgsByID(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) doGetAllMsgsByID(cReq getAllMsgsByIDRequest) ([]byte, error) {
+func (h *Handler) doGetAllMsgsByID(conversationID string) ([]byte, error) {
 	rows, err := h.db.Query(`
 		SELECT id, conversation_id, role, content, timestamp 
 		FROM messages 
 		WHERE conversation_id = $1
 		ORDER BY timestamp ASC
-	`, cReq.ConversationID)
+	`, conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("could not query messages: %v", err)
 	}

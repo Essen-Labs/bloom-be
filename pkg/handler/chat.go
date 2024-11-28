@@ -47,22 +47,16 @@ type GetAllChatResponse struct {
 // GetChatById gets a conversation by its ID
 // @Summary Get a conversation by ID
 // @Description Retrieves a conversation from the database using its ID
-// @Param conversation_id path string true "Conversation ID"
+// @Param conversation_id is path string true "Conversation ID"
 // @Success 200 {object} GetChatByIDResponse "Successfully retrieved the conversation"
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 404 {object} ErrorResponse "Conversation not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /get-chat-by-id [get]
+// @Router /get-chat-by-id/{conversation_id} [get]
 func (h *Handler) GetChatById(c *gin.Context) {
-	var req GetChatByIDRequest
+	conversationID := c.Param("conversation_id")
 
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	res, err := h.doGetChatByID(req)
+	res, err := h.doGetChatByID(conversationID)
 	if err != nil {
 		h.handleError(c, gerr.E(500, gerr.Trace(err)))
 		return
@@ -71,11 +65,11 @@ func (h *Handler) GetChatById(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) doGetChatByID(cReq GetChatByIDRequest) ([]byte, error) {
+func (h *Handler) doGetChatByID(conversationID string) ([]byte, error) {
 	var conversation Conversation
 
 	err := h.db.QueryRow(`
-        SELECT id, model, conversation_name, user_id FROM conversations WHERE id = $1`, cReq.ConversationID).Scan(
+        SELECT id, model, conversation_name, user_id FROM conversations WHERE id = $1`, conversationID).Scan(
 		&conversation.ID, &conversation.Model, &conversation.ConversationName, &conversation.UserID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -86,7 +80,7 @@ func (h *Handler) doGetChatByID(cReq GetChatByIDRequest) ([]byte, error) {
 
 	response := GetChatByIDResponse{
 		Success:      true,
-		Message:      fmt.Sprintf("Conversation with ID %s found", cReq.ConversationID),
+		Message:      fmt.Sprintf("Conversation with ID %s found", conversationID),
 		Conversation: conversation,
 	}
 	return json.Marshal(response)
@@ -99,7 +93,18 @@ func (h *Handler) doGetChatByID(cReq GetChatByIDRequest) ([]byte, error) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /get-chat-list [get]
 func (h *Handler) GetAllChat(c *gin.Context) {
-	res, err := h.doGetAllChat()
+	// Get the user ID from the cookie
+	userID, err := h.GetUserFromCookie(c)
+	if err != nil {
+		if err == http.ErrNoCookie {
+			h.SetUserCookie(c)
+		} else {
+			h.handleError(c, err)
+			return
+		}
+	}
+
+	res, err := h.doGetAllChat(userID)
 	if err != nil {
 		h.handleError(c, gerr.E(500, gerr.Trace(err)))
 		return
@@ -108,9 +113,9 @@ func (h *Handler) GetAllChat(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (h *Handler) doGetAllChat() ([]byte, error) {
+func (h *Handler) doGetAllChat(userID string) ([]byte, error) {
 	// Query to get all conversations
-	rows, err := h.db.Query("SELECT id, model, conversation_name, user_id FROM conversations")
+	rows, err := h.db.Query("SELECT id, model, conversation_name, user_id FROM conversations WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying conversations: %v", err)
 	}
@@ -133,17 +138,22 @@ func (h *Handler) doGetAllChat() ([]byte, error) {
 		return nil, fmt.Errorf("error iterating over conversations: %v", err)
 	}
 
-	response := GetAllChatResponse{
-		Success:       true,
-		Message:       "Conversations found",
-		Conversations: conversations,
+	var response GetAllChatResponse
+	if len(conversations) == 0 {
+		response = GetAllChatResponse{
+			Success:       false,
+			Message:       "Conversations not found",
+			Conversations: conversations,
+		}
+	} else {
+		response = GetAllChatResponse{
+			Success:       true,
+			Message:       "Conversations found",
+			Conversations: conversations,
+		}
 	}
 
 	return json.Marshal(response)
-}
-
-type deleteChatByIDRequest struct {
-	ConversationID string `json:"conversation_id"`
 }
 
 type deleteChatByIDResponse struct {
@@ -159,17 +169,11 @@ type deleteChatByIDResponse struct {
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 404 {object} ErrorResponse "Conversation not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /delete-chat [delete]
+// @Router /delete-chat/{conversation_id} [delete]
 func (h *Handler) DeleteChatById(c *gin.Context) {
-	var req deleteChatByIDRequest
+	conversationID := c.Param("conversation_id")
 
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		h.handleError(c, err)
-		return
-	}
-
-	res, err := h.doDeleteChatByID(req)
+	res, err := h.doDeleteChatByID(conversationID)
 	if err != nil {
 		h.handleError(c, gerr.E(500, gerr.Trace(err)))
 		return
@@ -183,7 +187,7 @@ type deleteAllChatByUserIDResponse struct {
 	Message string `json:"message"`
 }
 
-func (h *Handler) doDeleteChatByID(cReq deleteChatByIDRequest) ([]byte, error) {
+func (h *Handler) doDeleteChatByID(conversationID string) ([]byte, error) {
 	tx, err := h.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("could not begin transaction: %v", err)
@@ -201,12 +205,12 @@ func (h *Handler) doDeleteChatByID(cReq deleteChatByIDRequest) ([]byte, error) {
 		}
 	}()
 
-	_, err = tx.Exec("DELETE FROM messages WHERE conversation_id = $1", cReq.ConversationID)
+	_, err = tx.Exec("DELETE FROM messages WHERE conversation_id = $1", conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("could not delete messages: %v", err)
 	}
 
-	result, err := tx.Exec("DELETE FROM conversations WHERE id = $1", cReq.ConversationID)
+	result, err := tx.Exec("DELETE FROM conversations WHERE id = $1", conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("could not delete conversation: %v", err)
 	}
@@ -217,13 +221,13 @@ func (h *Handler) doDeleteChatByID(cReq deleteChatByIDRequest) ([]byte, error) {
 		return nil, fmt.Errorf("could not check rows affected: %v", err)
 	}
 	if rowsAffected == 0 {
-		return nil, fmt.Errorf("conversation with id %s not found", cReq.ConversationID)
+		return nil, fmt.Errorf("conversation with id %s not found", conversationID)
 	}
 
 	// Step 3: Create a success response
 	response := deleteChatByIDResponse{
 		Success: true,
-		Message: fmt.Sprintf("Conversation with ID %s deleted successfully", cReq.ConversationID),
+		Message: fmt.Sprintf("Conversation with ID %s deleted successfully", conversationID),
 	}
 
 	// Marshal the response to JSON

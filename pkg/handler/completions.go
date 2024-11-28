@@ -278,10 +278,10 @@ func ensureConversation(db *sql.DB, conversationID string, model, userID string)
 	// If conversation doesn't exist, create a new one
 	var newConversationID string
 	err = db.QueryRow(`
-		INSERT INTO conversations (id, model, user_id)
-		VALUES ($1, $2, $3)
+		INSERT INTO conversations (id, model, conversation_name ,user_id)
+		VALUES ($1, $2, $3, $4)
 		ON CONFLICT(id) DO NOTHING
-		RETURNING id`, conversationID, model, userID).Scan(&newConversationID)
+		RETURNING id`, conversationID, model, conversationID+"/"+userID, userID).Scan(&newConversationID)
 	if err != nil {
 		return "", fmt.Errorf("could not create conversation: %v", err)
 	}

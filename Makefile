@@ -14,12 +14,6 @@ build:
 dev:
 	go run ./cmd/server/main.go
 
-admin:
-	go run ./cmd/admin/*.go
-
-test:
-	go test -cover ./...
-
 docker-build:
 	docker build \
 	--build-arg DEFAULT_PORT="${DEFAULT_PORT}" \

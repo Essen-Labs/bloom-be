@@ -93,16 +93,8 @@ func (h *Handler) doGetChatByID(conversationID string) ([]byte, error) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /get-chat-list [get]
 func (h *Handler) GetAllChat(c *gin.Context) {
-	// Get the user ID from the cookie
-	userID, err := h.GetUserFromCookie(c)
-	if err != nil {
-		if err == http.ErrNoCookie {
-			h.SetUserCookie(c)
-		} else {
-			h.handleError(c, err)
-			return
-		}
-	}
+	// Get the user ID from the header
+	userID := c.Request.Header.Get("user-id")
 
 	res, err := h.doGetAllChat(userID)
 	if err != nil {
@@ -248,7 +240,7 @@ func (h *Handler) DeleteAllChat(c *gin.Context) {
 	userID, err := h.GetUserFromCookie(c)
 	if err != nil {
 		if err == http.ErrNoCookie {
-			h.SetUserCookie(c)
+			userID = h.SetUserCookie(c)
 		} else {
 			h.handleError(c, err)
 			return

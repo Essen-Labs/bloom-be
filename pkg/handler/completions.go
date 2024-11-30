@@ -30,12 +30,13 @@ type completionsRequest struct {
 
 // Response structure for the completion request
 type CompletionResponse struct {
-	Success        bool   `json:"success"`
-	Message        string `json:"message"`
-	Content        string `json:"content"`
-	Role           string `json:"role"`
-	ConversationID string `json:"conversation_id"`
-	CreatedAt      int64  `json:"created_at"`
+	Success          bool   `json:"success"`
+	Message          string `json:"message"`
+	Content          string `json:"content"`
+	Role             string `json:"role"`
+	ConversationID   string `json:"conversation_id"`
+	ConversationName string `json:"conversation_name"`
+	CreatedAt        int64  `json:"created_at"`
 }
 
 // Define the structs to match the JSON structure
@@ -99,16 +100,8 @@ func (h *Handler) Completions(c *gin.Context) {
 		return
 	}
 
-	// Get the user ID from the cookie
-	userID, err := h.GetUserFromCookie(c)
-	if err != nil {
-		if err == http.ErrNoCookie {
-			h.SetUserCookie(c)
-		} else {
-			h.handleError(c, err)
-			return
-		}
-	}
+	// Get the user ID from the header
+	userID := c.Request.Header.Get("user-id")
 
 	// If the conversation ID is not provided, get the most recent conversation ID and increment it by 1
 	if req.ConversationID == "" {
@@ -162,6 +155,7 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 		"model":    "Meta-Llama-3-1-8B-Instruct-FP8",
 		"messages": oldMsgs,
 	}
+
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return handleError[CompletionResponse]("Error marshalling JSON:", err)
@@ -202,6 +196,69 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 	err = h.setMessages(conversationID, completionResponse.Choices[0].Message, completionResponse.Created)
 	if err != nil {
 		return handleError[CompletionResponse]("Error inserting completion message into DB:", err)
+	}
+
+	var summarizeResponse AkashCompletionResponse
+	if len(oldMsgs) == 3 {
+		msgs := append(oldMsgs, map[string]string{
+			"role":    completionResponse.Choices[0].Message.Role,
+			"content": completionResponse.Choices[0].Message.Content,
+		},
+			map[string]string{
+				"role":    "user",
+				"content": "Summarize this conversation in 4-5 concise words",
+			},
+		)
+
+		payload := map[string]interface{}{
+			"model":    "Meta-Llama-3-1-8B-Instruct-FP8",
+			"messages": msgs,
+		}
+
+		jsonData, err := json.Marshal(payload)
+		if err != nil {
+			return handleError[CompletionResponse]("Error marshalling JSON:", err)
+		}
+
+		client := &http.Client{}
+		req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return handleError[CompletionResponse]("Error creating request:", err)
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Authorization", "Bearer sk-rMHU18txLCr23JJQNoR9hw")
+
+		res, err := client.Do(req)
+		if err != nil {
+			return handleError[CompletionResponse]("Error making API request:", err)
+		}
+		defer res.Body.Close()
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return handleError[CompletionResponse]("Error reading response body:", err)
+		}
+
+		var prettyJSON bytes.Buffer
+		err = json.Indent(&prettyJSON, body, "", "  ")
+		if err != nil {
+			return handleError[CompletionResponse]("Error indenting JSON:", err)
+		}
+
+		err = json.Unmarshal(prettyJSON.Bytes(), &summarizeResponse)
+		if err != nil {
+			return handleError[CompletionResponse]("Error unmarshaling JSON:", err)
+		}
+		return CompletionResponse{
+			Success:          true,
+			Message:          "Successfully completed the request.",
+			Content:          completionResponse.Choices[0].Message.Content,
+			Role:             completionResponse.Choices[0].Message.Role,
+			ConversationID:   conversationID,
+			CreatedAt:        completionResponse.Created,
+			ConversationName: summarizeResponse.Choices[0].Message.Content,
+		}, nil
 	}
 
 	// Prepare the final response structure
@@ -281,7 +338,7 @@ func ensureConversation(db *sql.DB, conversationID string, model, userID string)
 		INSERT INTO conversations (id, model, conversation_name ,user_id)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT(id) DO NOTHING
-		RETURNING id`, conversationID, model, conversationID+"/"+userID, userID).Scan(&newConversationID)
+		RETURNING id`, conversationID, model, "New Conversation", userID).Scan(&newConversationID)
 	if err != nil {
 		return "", fmt.Errorf("could not create conversation: %v", err)
 	}

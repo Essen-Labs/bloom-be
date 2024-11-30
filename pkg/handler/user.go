@@ -32,7 +32,7 @@ func (h *Handler) GetUserFromCookie(c *gin.Context) (string, error) {
 	return cookie.Value, nil
 }
 
-func (h *Handler) SetUserCookie(c *gin.Context) {
+func (h *Handler) SetUserCookie(c *gin.Context) string {
 	userID := uuid.New().String()
 	cookie := &http.Cookie{
 		Name:     "user_id",
@@ -43,4 +43,5 @@ func (h *Handler) SetUserCookie(c *gin.Context) {
 		SameSite: http.SameSiteStrictMode,
 	}
 	http.SetCookie(c.Writer, cookie)
+	return userID
 }

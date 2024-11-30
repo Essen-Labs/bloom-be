@@ -103,9 +103,9 @@ func (a App) setupRouter() *gin.Engine {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Use(middleware.NewLogDataMiddleware(a.cfg.ServiceName, a.cfg.Env))
 	r.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
-		AllowHeaders:     []string{"Origin", "Host", "Content-Type", "Content-Length", "Accept-Encoding", "Accept-Language", "Accept", "X-CSRF-Token", "Authorization", "X-Requested-With", "X-Access-Token"},
+		AllowHeaders:     []string{"Origin", "Host", "Content-Type", "Content-Length", "Accept-Encoding", "Accept-Language", "Accept", "X-CSRF-Token", "Authorization", "X-Requested-With", "X-Access-Token", "user-id"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))

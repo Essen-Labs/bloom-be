@@ -359,15 +359,35 @@ func ensureConversation(db *sql.DB, conversationID string, model, userID string)
 }
 
 func insertName(db *sql.DB, conversationID string, conversation_name string) (string, error) {
-	var insertedID string
-	err := db.QueryRow(`INSERT INTO conversations (id, conversation_name) 
-	VALUES ($1, $2)
-	ON CONFLICT(id) DO NOTHING
-	RETURNING id`, conversationID, conversation_name).Scan(&insertedID)
-	if err != nil {
-		return "", fmt.Errorf("could not insert conversation name: %v", err)
-	}
-	return insertedID, nil
+	var existingID string
+
+    // Check if the conversation already exists
+    err := db.QueryRow(`SELECT id FROM conversations WHERE id = $1`, conversationID).Scan(&existingID)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            // If not found, insert a new row
+            err = db.QueryRow(
+                `INSERT INTO conversations (id, conversation_name) 
+                 VALUES ($1, $2) 
+                 RETURNING id`,
+                conversationID, conversation_name,
+            ).Scan(&existingID)
+            if err != nil {
+                return "", fmt.Errorf("could not insert conversation: %v", err)
+            }
+            return existingID, nil
+        }
+        // Return other errors during the SELECT operation
+        return "", fmt.Errorf("could not check conversation existence: %v", err)
+    }
+
+    // If found, update the conversation name
+    _, err = db.Exec(`UPDATE conversations SET conversation_name = $1 WHERE id = $2`, conversation_name, conversationID)
+    if err != nil {
+        return "", fmt.Errorf("could not update conversation name: %v", err)
+    }
+
+    return existingID, nil
 }
 
 func getMostRecentConversationID(db *sql.DB) (int, error) {

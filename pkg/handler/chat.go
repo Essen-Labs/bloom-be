@@ -237,16 +237,8 @@ func (h *Handler) doDeleteChatByID(conversationID string) ([]byte, error) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /delete-all-chat [delete]
 func (h *Handler) DeleteAllChat(c *gin.Context) {
-	// Get the user ID from the cookie
-	userID, err := h.GetUserFromCookie(c)
-	if err != nil {
-		if err == http.ErrNoCookie {
-			userID = h.SetUserCookie(c)
-		} else {
-			h.handleError(c, err)
-			return
-		}
-	}
+	// Get the user ID from the header
+	userID := c.Request.Header.Get("user-id")
 
 	res, err := h.doDeleteAllChatByUserID(userID)
 	if err != nil {

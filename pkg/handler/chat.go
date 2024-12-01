@@ -300,8 +300,8 @@ func (h *Handler) doDeleteAllChatByUserID(userID string) ([]byte, error) {
 }
 
 type EditChatRequest struct {
-	NewName        string `json:"role" binding:"new_name"`
-	ConversationID string `json:"content" binding:"conversation_id"`
+	NewName        string `json:"new_name" binding:"required"`
+	ConversationID string `json:"conversation_id" binding:"required"`
 }
 
 func (h *Handler) EditChat(c *gin.Context) {

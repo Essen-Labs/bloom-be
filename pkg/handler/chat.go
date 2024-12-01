@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -304,4 +305,69 @@ func (h *Handler) doDeleteAllChatByUserID(userID string) ([]byte, error) {
 	}
 
 	return json.Marshal(response)
+}
+
+type EditChatRequest struct {
+	NewName        string `json:"role" binding:"new_name"`
+	ConversationID string `json:"content" binding:"conversation_id"`
+}
+
+func (h *Handler) EditChat(c *gin.Context) {
+	req := EditChatRequest{}
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+
+	// Get the user ID from the header
+	userID := c.Request.Header.Get("user-id")
+
+	res, err := h.doEditChat(userID, req)
+	if err != nil {
+		h.handleError(c, gerr.E(500, gerr.Trace(err)))
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *Handler) doEditChat(userID string, req EditChatRequest) ([]byte, error) {
+	// Validate input
+	if req.NewName == "" || req.ConversationID == "" {
+		return nil, errors.New("new_name and conversation_id are required")
+	}
+
+	// SQL query to update the conversation name
+	query := `
+		UPDATE conversations 
+		SET conversation_name = $1
+		WHERE id = $2 AND user_id = $3
+		RETURNING conversation_name
+		`
+	var updatedName string
+
+	// Execute the query
+	err := h.db.QueryRow(query, req.NewName, req.ConversationID, userID).Scan(&updatedName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("conversation not found or user not authorized")
+		}
+		return nil, err
+	}
+
+	// Prepare the response
+	response := map[string]string{
+		"id":                req.ConversationID,
+		"conversation_name": updatedName,
+	}
+
+	// Marshal the response to JSON
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return responseJSON, nil
 }

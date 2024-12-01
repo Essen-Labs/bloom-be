@@ -120,7 +120,7 @@ func (a App) setupRouter() *gin.Engine {
 	r.GET("/get-all-msgs-by-id/:conversation_id", h.GetAllMsgsByID)
 	r.DELETE("/delete-chat/:conversation_id", h.DeleteChatById)
 	r.DELETE("/delete-all-chat", h.DeleteAllChat)
-	// r.POST("/edit-chat", h.Completions)         // TODO
+	r.POST("/edit-chat", h.EditChat)
 	// r.GET("/get-model-list", h.Completions)     // TODO
 	return r
 }

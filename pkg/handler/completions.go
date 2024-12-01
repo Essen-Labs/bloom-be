@@ -152,7 +152,7 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 	}
 
 	payload := map[string]interface{}{
-		"model":    "Meta-Llama-3-1-8B-Instruct-FP8",
+		"model":    model,
 		"messages": oldMsgs,
 	}
 
@@ -250,6 +250,12 @@ func (h *Handler) doCompletions(cReq completionsRequest, userID, conversationID,
 		if err != nil {
 			return handleError[CompletionResponse]("Error unmarshaling JSON:", err)
 		}
+
+		_, err = insertName(h.db, conversationID, summarizeResponse.Choices[0].Message.Content)
+		if err != nil {
+			return handleError[CompletionResponse]("Error insert name:", err)
+		}
+
 		return CompletionResponse{
 			Success:          true,
 			Message:          "Successfully completed the request.",
@@ -350,6 +356,18 @@ func ensureConversation(db *sql.DB, conversationID string, model, userID string)
 	}
 
 	return newConversationID, nil
+}
+
+func insertName(db *sql.DB, conversationID string, conversation_name string) (string, error) {
+	var insertedID string
+	err := db.QueryRow(`INSERT INTO conversations (id, conversation_name) 
+	VALUES ($1, $2)
+	ON CONFLICT(id) DO NOTHING
+	RETURNING id`, conversationID, conversation_name).Scan(&insertedID)
+	if err != nil {
+		return "", fmt.Errorf("could not insert conversation name: %v", err)
+	}
+	return insertedID, nil
 }
 
 func getMostRecentConversationID(db *sql.DB) (int, error) {

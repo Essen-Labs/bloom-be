@@ -341,10 +341,10 @@ func ensureConversation(db *sql.DB, conversationID string, model, userID string)
 	// If conversation doesn't exist, create a new one
 	var newConversationID string
 	err = db.QueryRow(`
-		INSERT INTO conversations (id, model, conversation_name ,user_id)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO conversations (id, model, conversation_name ,user_id, created_at)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT(id) DO NOTHING
-		RETURNING id`, conversationID, model, "New Conversation", userID).Scan(&newConversationID)
+		RETURNING id`, conversationID, model, "New Conversation", userID, time.Now().Unix()).Scan(&newConversationID)
 	if err != nil {
 		return "", fmt.Errorf("could not create conversation: %v", err)
 	}
@@ -361,33 +361,33 @@ func ensureConversation(db *sql.DB, conversationID string, model, userID string)
 func insertName(db *sql.DB, conversationID string, conversation_name string) (string, error) {
 	var existingID string
 
-    // Check if the conversation already exists
-    err := db.QueryRow(`SELECT id FROM conversations WHERE id = $1`, conversationID).Scan(&existingID)
-    if err != nil {
-        if err == sql.ErrNoRows {
-            // If not found, insert a new row
-            err = db.QueryRow(
-                `INSERT INTO conversations (id, conversation_name) 
+	// Check if the conversation already exists
+	err := db.QueryRow(`SELECT id FROM conversations WHERE id = $1`, conversationID).Scan(&existingID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// If not found, insert a new row
+			err = db.QueryRow(
+				`INSERT INTO conversations (id, conversation_name) 
                  VALUES ($1, $2) 
                  RETURNING id`,
-                conversationID, conversation_name,
-            ).Scan(&existingID)
-            if err != nil {
-                return "", fmt.Errorf("could not insert conversation: %v", err)
-            }
-            return existingID, nil
-        }
-        // Return other errors during the SELECT operation
-        return "", fmt.Errorf("could not check conversation existence: %v", err)
-    }
+				conversationID, conversation_name,
+			).Scan(&existingID)
+			if err != nil {
+				return "", fmt.Errorf("could not insert conversation: %v", err)
+			}
+			return existingID, nil
+		}
+		// Return other errors during the SELECT operation
+		return "", fmt.Errorf("could not check conversation existence: %v", err)
+	}
 
-    // If found, update the conversation name
-    _, err = db.Exec(`UPDATE conversations SET conversation_name = $1 WHERE id = $2`, conversation_name, conversationID)
-    if err != nil {
-        return "", fmt.Errorf("could not update conversation name: %v", err)
-    }
+	// If found, update the conversation name
+	_, err = db.Exec(`UPDATE conversations SET conversation_name = $1 WHERE id = $2`, conversation_name, conversationID)
+	if err != nil {
+		return "", fmt.Errorf("could not update conversation name: %v", err)
+	}
 
-    return existingID, nil
+	return existingID, nil
 }
 
 func getMostRecentConversationID(db *sql.DB) (int, error) {

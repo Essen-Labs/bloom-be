@@ -6,6 +6,7 @@ type Conversation struct {
 	Model            string `json:"model"`                    // Model used for the conversation
 	ConversationName string `json:"conversationName"`         // Name of the conversation
 	UserID           string `json:"userID"`                   // User ID associated with the conversation
+	CreatedAt        string `json:"createdAt"`                // Time the conversation was created
 }
 
 type Message struct {

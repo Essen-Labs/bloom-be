@@ -11,7 +11,8 @@ func (a App) createTables() error {
 			id SERIAL PRIMARY KEY,
 			model VARCHAR(255),
 			conversation_name VARCHAR(255),
-			user_id VARCHAR(255)
+			user_id VARCHAR(255), 
+			created_at VARCHAR(255)
 		)
 	`)
 	if err != nil {

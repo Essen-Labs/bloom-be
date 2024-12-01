@@ -70,8 +70,8 @@ func (h *Handler) doGetChatByID(conversationID string) ([]byte, error) {
 	var conversation Conversation
 
 	err := h.db.QueryRow(`
-        SELECT id, model, conversation_name, user_id FROM conversations WHERE id = $1`, conversationID).Scan(
-		&conversation.ID, &conversation.Model, &conversation.ConversationName, &conversation.UserID)
+        SELECT id, model, conversation_name, user_id, created_at FROM conversations WHERE id = $1`, conversationID).Scan(
+		&conversation.ID, &conversation.Model, &conversation.ConversationName, &conversation.UserID, &conversation.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("conversation not found")
@@ -108,7 +108,7 @@ func (h *Handler) GetAllChat(c *gin.Context) {
 
 func (h *Handler) doGetAllChat(userID string) ([]byte, error) {
 	// Query to get all conversations
-	rows, err := h.db.Query("SELECT id, model, conversation_name, user_id FROM conversations WHERE user_id = $1", userID)
+	rows, err := h.db.Query("SELECT id, model, conversation_name, user_id, created_at FROM conversations WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, fmt.Errorf("error querying conversations: %v", err)
 	}
@@ -120,7 +120,7 @@ func (h *Handler) doGetAllChat(userID string) ([]byte, error) {
 	// Iterate over the rows
 	for rows.Next() {
 		var conversation Conversation
-		if err := rows.Scan(&conversation.ID, &conversation.Model, &conversation.ConversationName, &conversation.UserID); err != nil {
+		if err := rows.Scan(&conversation.ID, &conversation.Model, &conversation.ConversationName, &conversation.UserID, &conversation.CreatedAt); err != nil {
 			return nil, fmt.Errorf("error scanning conversation: %v", err)
 		}
 		conversations = append(conversations, conversation)

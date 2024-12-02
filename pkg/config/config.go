@@ -21,8 +21,6 @@ type Config struct {
 	DBName          string
 	DBPass          string
 	DBSSLMode       string
-	AkashAPIKey     string
-	GptAPIKey       string
 	FrontendBaseURL string
 }
 
@@ -61,8 +59,6 @@ func generateConfigFromViper(v *viper.Viper) Config {
 		DBPass:    v.GetString("DB_PASS"),
 		DBSSLMode: v.GetString("DB_SSL_MODE"),
 
-		AkashAPIKey:     v.GetString("AKASH_API_KEY"),
-		GptAPIKey:       v.GetString("GPT_API_KEY"),
 		FrontendBaseURL: v.GetString("FRONTEND_BASE_URL"),
 	}
 }

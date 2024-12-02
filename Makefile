@@ -8,19 +8,17 @@ setup:
 	cd ~ && go get github.com/golang/mock/mockgen
 	cp .env.sample .env && vim .env
 
-build:
-	env GOOS=darwin GOARCH=amd64 go build -o bin/server $(shell pwd)/cmd/server/
 
 dev:
 	go run ./cmd/server/main.go
-
-admin:
-	go run ./cmd/admin/*.go
-
-test:
-	go test -cover ./...
 
 docker-build:
 	docker build \
 	--build-arg DEFAULT_PORT="${DEFAULT_PORT}" \
 	-t ${APP_NAME}:latest .
+
+build:
+	sudo docker build -t truongvanhuy2000/bloom-be .
+
+push:
+	sudo docker push truongvanhuy2000/bloom-be

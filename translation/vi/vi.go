@@ -18,13 +18,25 @@ func Init(uni *ut.UniversalTranslator, validate *validator.Validate) error {
 		return errors.New("Translation not found")
 	}
 
-	vi.Add("username", "tên đăng nhập", false)
-	vi.Add("password", "mật khẩu", false)
-	vi.Add("amount", "số lượng sản phẩm", false)
-	vi.Add("bad request", "không thể thực hiện yêu cầu", false)
+	err := vi.Add("username", "tên đăng nhập", false)
+	if err != nil {
+		return err
+	}
+	err = vi.Add("password", "mật khẩu", false)
+	if err != nil {
+		return err
+	}
+	err = vi.Add("amount", "số lượng sản phẩm", false)
+	if err != nil {
+		return err
+	}
+	err = vi.Add("bad request", "không thể thực hiện yêu cầu", false)
+	if err != nil {
+		return err
+	}
 
 	// validator translations & Overrides
-	err := RegisterDefaultTranslations(validate, vi)
+	err = RegisterDefaultTranslations(validate, vi)
 	if err != nil {
 		return errors.New("Error adding default translations: " + err.Error())
 	}

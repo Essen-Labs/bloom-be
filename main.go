@@ -1,9 +1,15 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"os"
+
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
 	router := gin.New()
 
-	router.Run(":8080")
+	if err := router.Run(":8080"); err != nil {
+		os.Exit(1)
+	}
 }
